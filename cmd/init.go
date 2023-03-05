@@ -36,17 +36,27 @@ func init() {
 
 // TODO: Improve logging/code
 var initCmd = &cobra.Command{
-	Use: "init",
+	Use:   "init",
 	Short: "Initialize the configuration files.",
-	Long: `Initialize the configuration files.`,
+	Long:  `Initialize the configuration files.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if metadata.IsSet("repositories") {
 			fmt.Println("Repositories already defined.")
 		} else {
+			fmt.Println("Fetching user repositories...")
 			repos := github.GetUserRepositories()
 			repositories := ReadRepositories(repos)
 			metadata.Set("repositories", repositories)
 			fmt.Println("Set default repositories to user-owned.")
+		}
+		if metadata.IsSet("workflows") {
+			fmt.Println("Workflows already defined.")
+		} else {
+			fmt.Println("Fetching user workflows...")
+			wfs := github.GetUserWorkflows()
+			workflows := ReadWorkflows(wfs)
+			metadata.Set("workflows", workflows)
+			fmt.Println("Set default workflows to user-owned.")
 		}
 		if viper.IsSet("updateEvery") {
 			fmt.Println("Update delay already defined.")

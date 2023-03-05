@@ -19,47 +19,49 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package github
 
 import (
-	"github.com/SamWolfs/rofi-github/github"
-	"strconv"
+	"encoding/json"
+	"github.com/cli/go-gh"
 )
 
-type Metadata struct {
-	Repositories []Repository
-}
-
-type Repository struct {
-	Name string `mapstructure:"name"`
-	Url  string `mapstructure:"url"`
+type WorkflowResponse struct {
+	TotalCount int32 `json:"total_count"`
+	Workflows  []Workflow
 }
 
 type Workflow struct {
-	Id         string `mapstructure:"id"`
-	Name       string `mapstructure:"name"`
-	Repository string `mapstructure:"repository"`
+	Id         int
+	Name       string
+	Repository string
 }
 
-func ReadRepositories(repositories []github.Repository) []Repository {
-	repos := make([]Repository, len(repositories))
-	for i, repo := range repositories {
-		repos[i] = Repository{
-			Name: repo.Owner.Login + "/" + repo.Name,
-			Url:  repo.Url,
-		}
+func GetUserWorkflows() []Workflow {
+	var workflows []Workflow
+	for _, repo := range GetUserRepositories() {
+		workflows = append(workflows, getWorkflowsForRepository(repo)...)
 	}
-	return repos
+	return workflows
 }
 
-func ReadWorkflows(workflows []github.Workflow) []Workflow {
-	wfs := make([]Workflow, len(workflows))
-	for i, workflow := range workflows {
-		wfs[i] = Workflow{
-			Id:         strconv.Itoa(workflow.Id),
-			Name:       workflow.Name,
-			Repository: workflow.Repository,
-		}
+func getWorkflowsForRepository(repository Repository) []Workflow {
+	query := "/repos/" + repository.Owner.Login + "/" + repository.Name + "/actions/workflows"
+	stdOut, _, err := gh.Exec("api", query)
+	if err != nil {
+		panic(err)
 	}
-	return wfs
+
+	var workflowResponse WorkflowResponse
+	if err := json.Unmarshal(stdOut.Bytes(), &workflowResponse); err != nil {
+		panic(err)
+	}
+
+	workflows := workflowResponse.Workflows[:0]
+	for _, workflow := range workflowResponse.Workflows {
+		workflow.Repository = repository.Url
+		workflows = append(workflows, workflow)
+	}
+
+	return workflows
 }
