@@ -49,8 +49,9 @@ to add repositories owned by other users, add them to your configuration file.`,
 			rows := make([]string, len(repositories))
 			for i, repo := range repositories {
 				// Provide the url as "hidden" info, available from the $ROFI_INFO environment variable
-				rows[i] = repo.Name + "\x00info\x1f" + repo.Url
+				rows[i] = formatRow(repo)
 			}
+			fmt.Println("\x00markup-rows\x1ftrue")
 			fmt.Print(strings.Join(rows, "\n"))
 		} else {
 			url := os.Getenv("ROFI_INFO")

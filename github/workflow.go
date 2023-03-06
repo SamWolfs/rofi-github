@@ -23,6 +23,8 @@ package github
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"github.com/cli/go-gh"
 )
 
@@ -46,7 +48,7 @@ func GetUserWorkflows() []Workflow {
 }
 
 func getWorkflowsForRepository(repository Repository) []Workflow {
-	query := "/repos/" + repository.Owner.Login + "/" + repository.Name + "/actions/workflows"
+	query := fmt.Sprintf("/repos/%s/%s/actions/workflows", repository.Owner.Login, repository.Name)
 	stdOut, _, err := gh.Exec("api", query)
 	if err != nil {
 		panic(err)
@@ -59,7 +61,7 @@ func getWorkflowsForRepository(repository Repository) []Workflow {
 
 	workflows := workflowResponse.Workflows[:0]
 	for _, workflow := range workflowResponse.Workflows {
-		workflow.Repository = repository.Url
+		workflow.Repository = fmt.Sprintf("%s/%s", repository.Owner.Login, repository.Name)
 		workflows = append(workflows, workflow)
 	}
 

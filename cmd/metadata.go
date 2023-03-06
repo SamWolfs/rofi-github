@@ -22,8 +22,12 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"github.com/SamWolfs/rofi-github/github"
+	"encoding/json"
+	"fmt"
 	"strconv"
+
+	"github.com/SamWolfs/rofi-github/github"
+	"github.com/spf13/viper"
 )
 
 type Metadata struct {
@@ -44,9 +48,10 @@ type Workflow struct {
 func ReadRepositories(repositories []github.Repository) []Repository {
 	repos := make([]Repository, len(repositories))
 	for i, repo := range repositories {
+		r := fmt.Sprintf("%s/%s", repo.Owner.Login, repo.Name)
 		repos[i] = Repository{
-			Name: repo.Owner.Login + "/" + repo.Name,
-			Url:  repo.Url,
+			Name: r,
+			Url:  r,
 		}
 	}
 	return repos
@@ -62,4 +67,19 @@ func ReadWorkflows(workflows []github.Workflow) []Workflow {
 		}
 	}
 	return wfs
+}
+
+func formatRow(row interface{}) string {
+	color := viper.GetString("fgColor")
+	if color == "" {
+		color = "#928374"
+	}
+	switch r := row.(type) {
+	case Repository:
+		return fmt.Sprintf("%s <span color=\"%s\" size=\"10pt\" style=\"italic\">(%s)</span>\x00info\x1f%s", r.Name, color, r.Url, r.Url)
+	case Workflow:
+		info, _ := json.Marshal(r)
+		return fmt.Sprintf("%s <span color=\"%s\" size=\"10pt\" style=\"italic\">(%s)</span>\x00info\x1f%s", r.Name, color, r.Repository, string(info[:]))
+	}
+	return "Type not implemented."
 }

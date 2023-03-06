@@ -50,9 +50,10 @@ to add workflows owned by other users, add them to your configuration file.`,
 			mapstructure.Decode(metadata.Get("workflows"), &workflows)
 			rows := make([]string, len(workflows))
 			for i, workflow := range workflows {
-				info, _ := json.Marshal(workflow)
-				rows[i] = workflow.Name + "\x00info\x1f" + string(info[:])
+				rows[i] = formatRow(workflow)
 			}
+			// Enable Markup
+			fmt.Println("\x00markup-rows\x1ftrue")
 			fmt.Print(strings.Join(rows, "\n"))
 		} else {
 			response := os.Getenv("ROFI_INFO")
