@@ -22,10 +22,12 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
 	"github.com/SamWolfs/rofi-github/github"
+	"github.com/spf13/viper"
 )
 
 type Metadata struct {
@@ -65,4 +67,19 @@ func ReadWorkflows(workflows []github.Workflow) []Workflow {
 		}
 	}
 	return wfs
+}
+
+func formatRow(row interface{}) string {
+	color := viper.GetString("fgColor")
+	if color == "" {
+		color = "#928374"
+	}
+	switch r := row.(type) {
+	case Repository:
+		return fmt.Sprintf("%s <span color=\"%s\" size=\"10pt\" style=\"italic\">(%s)</span>\x00info\x1f%s", r.Name, color, r.Url, r.Url)
+	case Workflow:
+		info, _ := json.Marshal(r)
+		return fmt.Sprintf("%s <span color=\"%s\" size=\"10pt\" style=\"italic\">(%s)</span>\x00info\x1f%s", r.Name, color, r.Repository, string(info[:]))
+	}
+	return "Type not implemented."
 }

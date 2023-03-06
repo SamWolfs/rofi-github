@@ -30,7 +30,6 @@ import (
 	"github.com/cli/go-gh"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func init() {
@@ -50,7 +49,7 @@ to add repositories owned by other users, add them to your configuration file.`,
 			rows := make([]string, len(repositories))
 			for i, repo := range repositories {
 				// Provide the url as "hidden" info, available from the $ROFI_INFO environment variable
-				rows[i] = formatRepository(repo)
+				rows[i] = formatRow(repo)
 			}
 			fmt.Println("\x00markup-rows\x1ftrue")
 			fmt.Print(strings.Join(rows, "\n"))
@@ -66,12 +65,4 @@ to add repositories owned by other users, add them to your configuration file.`,
 			}
 		}
 	},
-}
-
-func formatRepository(repository Repository) string {
-	color := viper.GetString("fgColor")
-	if color == "" {
-		color = "#928374"
-	}
-	return fmt.Sprintf("%s <span color=\"%s\" size=\"10pt\" style=\"italic\">(%s)</span>\x00info\x1f%s", repository.Name, color, repository.Url, repository.Url)
 }
