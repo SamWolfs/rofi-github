@@ -31,6 +31,7 @@ import (
 	"github.com/cli/go-gh"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -50,9 +51,10 @@ to add workflows owned by other users, add them to your configuration file.`,
 			mapstructure.Decode(metadata.Get("workflows"), &workflows)
 			rows := make([]string, len(workflows))
 			for i, workflow := range workflows {
-				info, _ := json.Marshal(workflow)
-				rows[i] = workflow.Name + "\x00info\x1f" + string(info[:])
+				rows[i] = formatWorkflow(workflow)
 			}
+			// Enable Markup
+			fmt.Println("\x00markup-rows\x1ftrue")
 			fmt.Print(strings.Join(rows, "\n"))
 		} else {
 			response := os.Getenv("ROFI_INFO")
@@ -68,4 +70,13 @@ to add workflows owned by other users, add them to your configuration file.`,
 			}
 		}
 	},
+}
+
+func formatWorkflow(workflow Workflow) string {
+	info, _ := json.Marshal(workflow)
+	color := viper.GetString("fgColor")
+	if color == "" {
+		color = "#928374"
+	}
+	return fmt.Sprintf("%s <span color=\"%s\" size=\"10pt\" style=\"italic\">(%s)</span>\x00info\x1f%s", workflow.Name, color, workflow.Repository, string(info[:]))
 }

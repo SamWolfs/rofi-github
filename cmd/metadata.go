@@ -22,8 +22,10 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"github.com/SamWolfs/rofi-github/github"
+	"fmt"
 	"strconv"
+
+	"github.com/SamWolfs/rofi-github/github"
 )
 
 type Metadata struct {
@@ -44,9 +46,10 @@ type Workflow struct {
 func ReadRepositories(repositories []github.Repository) []Repository {
 	repos := make([]Repository, len(repositories))
 	for i, repo := range repositories {
+		r := fmt.Sprintf("%s/%s", repo.Owner.Login, repo.Name)
 		repos[i] = Repository{
-			Name: repo.Owner.Login + "/" + repo.Name,
-			Url:  repo.Url,
+			Name: r,
+			Url:  r,
 		}
 	}
 	return repos
