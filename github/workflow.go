@@ -24,6 +24,8 @@ package github
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/cli/go-gh"
 )
@@ -34,14 +36,30 @@ type WorkflowResponse struct {
 }
 
 type Workflow struct {
-	Id         int
-	Name       string
-	Repository string
+	Id         int    `mapstructure:"id"`
+	Name       string `mapstructure:"name"`
+	Repository string `mapstructure:"repository"`
+}
+
+func (w Workflow) Format(color string) string {
+	info, _ := json.Marshal(w)
+	return fmt.Sprintf("%s <span color=\"%s\" size=\"10pt\" style=\"italic\">(%s)</span>\x00info\x1f%s", w.Name, color, w.Repository, string(info[:]))
+}
+
+func (w Workflow) View() {
+	_, stdErr, err := gh.Exec("workflow", "view", "-R", w.Repository, "--web", strconv.Itoa(w.Id))
+	if err != nil {
+		log.Fatal(string(stdErr.Bytes()[:]))
+	}
 }
 
 func GetUserWorkflows() []Workflow {
+	return GetWorkflows(GetUserRepositories())
+}
+
+func GetWorkflows(repositories []Repository) []Workflow {
 	var workflows []Workflow
-	for _, repo := range GetUserRepositories() {
+	for _, repo := range repositories {
 		workflows = append(workflows, getWorkflowsForRepository(repo)...)
 	}
 	return workflows

@@ -22,12 +22,13 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/cli/go-gh"
+	"github.com/SamWolfs/rofi-github/github"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
@@ -41,28 +42,27 @@ var repositoriesCmd = &cobra.Command{
 	Short: "List all user-owned and user-configured repositories.",
 	Long: `List all user-owned and user-configured repositories.
 By default only user-owned repositories will be returned;
-to add repositories owned by other users, add them to your configuration file.`,
+to add repositories owned by other users, manually add them to your configuration file.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			var repositories []Repository
+			var repositories []github.Repository
 			mapstructure.Decode(metadata.Get("repositories"), &repositories)
 			rows := make([]string, len(repositories))
 			for i, repo := range repositories {
 				// Provide the url as "hidden" info, available from the $ROFI_INFO environment variable
-				rows[i] = formatRow(repo)
+				rows[i] = formatResource(repo)
 			}
 			fmt.Println("\x00markup-rows\x1ftrue")
 			fmt.Print(strings.Join(rows, "\n"))
 		} else {
-			url := os.Getenv("ROFI_INFO")
-			if url == "" {
-				log.Fatal("Choose an repository.")
+			response := os.Getenv("ROFI_INFO")
+			if response == "" {
+				log.Fatal("Choose a repository.")
 				return
 			}
-			_, stdErr, err := gh.Exec("repo", "view", "--web", url)
-			if err != nil {
-				log.Fatal(string(stdErr.Bytes()[:]))
-			}
+			var repository github.Repository
+			json.Unmarshal([]byte(response), &repository)
+			repository.View()
 		}
 	},
 }

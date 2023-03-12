@@ -68,7 +68,7 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	initCmd.Flags().StringVarP(&forceInit, "force", "f", "", "Force resource to be re-initialized")
 }
 
 // initConfig reads in config file and ENV variables if set.
