@@ -28,7 +28,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cli/go-gh"
+	"github.com/SamWolfs/rofi-github/github"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
@@ -46,11 +46,11 @@ By default only user-owned workflows will be returned;
 to add workflows owned by other users, add them to your configuration file.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			var workflows []Workflow
+			var workflows []github.Workflow
 			mapstructure.Decode(metadata.Get("workflows"), &workflows)
 			rows := make([]string, len(workflows))
 			for i, workflow := range workflows {
-				rows[i] = formatRow(workflow)
+				rows[i] = formatResource(workflow)
 			}
 			// Enable Markup
 			fmt.Println("\x00markup-rows\x1ftrue")
@@ -61,12 +61,9 @@ to add workflows owned by other users, add them to your configuration file.`,
 				log.Fatal("Choose a workflow.")
 				return
 			}
-			var workflow Workflow
+			var workflow github.Workflow
 			json.Unmarshal([]byte(response), &workflow)
-			_, stdErr, err := gh.Exec("workflow", "view", "-R", workflow.Repository, "--web", workflow.Id)
-			if err != nil {
-				log.Fatal(string(stdErr.Bytes()[:]))
-			}
+			workflow.View()
 		}
 	},
 }

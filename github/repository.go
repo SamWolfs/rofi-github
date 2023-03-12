@@ -23,22 +23,45 @@ package github
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
+
 	"github.com/cli/go-gh"
 )
 
 type Repository struct {
-	Name  string
-	Owner Owner
-	Url   string
+	Name  string `mapstructure:"name"`
+	Owner struct {
+		Login string `mapstructure:"login"`
+	} `mapstructure:"owner"`
+	Pretty string `mapstructure:"pretty"`
 }
 
-type Owner struct {
-	Id    string
-	Login string
+func (r Repository) Format(color string) string {
+	info, _ := json.Marshal(r)
+	return fmt.Sprintf("%s <span color=\"%s\" size=\"10pt\" style=\"italic\">(%s)</span>\x00info\x1f%s", r.Print(), color, r.Url(), string(info[:]))
+}
+
+func (r Repository) Print() string {
+	if r.Pretty == "" {
+		return r.Name
+	}
+	return r.Pretty
+}
+
+func (r Repository) View() {
+	_, stdErr, err := gh.Exec("repo", "view", "--web", r.Url())
+	if err != nil {
+		log.Fatal(string(stdErr.Bytes()[:]))
+	}
+}
+
+func (repository Repository) Url() string {
+	return fmt.Sprintf("%s/%s", repository.Owner.Login, repository.Name)
 }
 
 func GetUserRepositories() []Repository {
-	stdOut, _, err := gh.Exec("repo", "list", "--json", "name,owner,url")
+	stdOut, _, err := gh.Exec("repo", "list", "--json", "name,owner")
 	if err != nil {
 		panic(err)
 	}
